@@ -64,7 +64,7 @@ def directory_tsl_args(neutron_dir, thermal_dir, output_dir, libver):
                 )
 
             isotope_specific = (
-                material == 'Zy4'or (material == 'PuO2' and symbol == 'Pu')
+                material == 'Zy4' or (material == 'PuO2' and symbol == 'Pu')
             )
             name_part = nuclide if isotope_specific else symbol
             name = f'c_{name_part}_in_{material}'
@@ -424,7 +424,7 @@ def main():
                              args.destination / particle, args.libver)
                 r = pool.apply_async(process_thermal, func_args)
                 results.append(r)
-            # special treament for directory organized tsl (PuO2, UO2, Zy4)
+            # special treatment for directory organized tsl (PuO2, ThO2, UO2, Zy4)
             for func_args in directory_tsl_args(
                     neutron_dir,
                     thermal_dir,
@@ -432,7 +432,7 @@ def main():
                     args.libver):
                 r = pool.apply_async(process_thermal, func_args)
                 results.append(r)
-          
+
             for r in results:
                 r.wait()
 
