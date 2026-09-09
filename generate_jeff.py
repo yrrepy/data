@@ -19,13 +19,9 @@ from utils import download, extract, process_neutron, process_thermal
 DIRECTORY_TSL = {
     'PuO2': ('O16', 'Pu238', 'Pu239', 'Pu240', 'Pu241', 'Pu242'),
     'ThO2': ('O16', 'Th232'),
-    'UO2': ('O16', 'U238'),
-    'Zy4': (
-        'Sn112', 'Sn114', 'Sn115', 'Sn116', 'Sn117',
-        'Sn118', 'Sn119', 'Sn120', 'Sn122', 'Sn124',
-        'Zr90', 'Zr91', 'Zr92', 'Zr94', 'Zr96',
-    ),
-}
+    'UO2':  ('O16', 'U238'),
+    'Zy4':  ('Sn112', 'Sn114', 'Sn115', 'Sn116', 'Sn117', 'Sn118', 'Sn119', 'Sn120', 'Sn122', 'Sn124',
+             'Zr90', 'Zr91', 'Zr92', 'Zr94', 'Zr96')}
 
 
 def directory_tsl_args(neutron_dir, thermal_dir, output_dir, libver):
