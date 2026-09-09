@@ -56,7 +56,8 @@ def _thermal_from_njoy(path_neutron, path_thermal, **kwargs):
 
 
 def process_thermal(path_neutron, path_thermal, output_dir, libver,
-                    name=None, table_name=None, zaid=None, nuclide=None):
+                    name=None, table_name=None, zaid=None, nuclide=None,
+                    use_endf_data=True):
     """Process ENDF thermal scattering sublibrary file into HDF5 and write into a
     specified output directory."""
 
@@ -69,10 +70,11 @@ def process_thermal(path_neutron, path_thermal, output_dir, libver,
 
     for thermal_path in paths_thermal:
         print(f'Converting: {thermal_path}')
-
-        kwargs = {}
+        # Needed for Zy4 mixed-elastic handling.
+        kwargs = {'use_endf_data': use_endf_data}
         if table_name is not None:
-            kwargs = {'table_name': table_name, 'zaids': [zaid], 'nmix': 1}
+            kwargs.update(table_name=table_name, zaids=[zaid], nmix=1)
+
         new_data = _thermal_from_njoy(path_neutron, thermal_path, **kwargs)
 
         if name is not None:
