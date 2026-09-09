@@ -33,26 +33,37 @@ def directory_tsl_args(neutron_dir, thermal_dir, output_dir, libver):
     for material, nuclides in DIRECTORY_TSL.items():
         material_dir = thermal_dir / f'tsl_{material}'
 
+        burnup_dirs = []
+        if material == 'Zy4':
+            burnup_dirs = sorted(
+                (material_dir / 'Burnup').glob('[0-9]*GWdt'),
+                key=lambda path: int(path.name[:-4]),
+            )
+            if not burnup_dirs:
+                raise FileNotFoundError('No Zy4 burnup evaluations found')
+
         for nuclide in nuclides:
             symbol = nuclide.rstrip('0123456789')
             Z, A, _ = openmc.data.zam(nuclide)
-
             path_neutron = (
                 neutron_dir / f'n_{Z}-{symbol}-{A:03d}g.jeff'
             )
-            paths_thermal = sorted(
-                material_dir.glob(
-                    f'[0-9]*K/'
-                    f'tsl_{nuclide}_{material}_[0-9]*K.jeff'
-                ),
-                key=lambda path: int(path.parent.name[:-1]),
-            )
 
-            if not paths_thermal:
-                raise FileNotFoundError(
-                    f'No TSL evaluations found for '
-                    f'{nuclide} in {material}'
-                )
+            evaluations = [
+                ('', sorted(
+                    material_dir.glob(
+                        f'[0-9]*K/'
+                        f'tsl_{nuclide}_{material}_[0-9]*K.jeff'
+                    ),
+                    key=lambda path: int(path.parent.name[:-1]),
+                ))
+            ]
+            evaluations.extend(
+                (f'_{path.name}', [
+                    path / f'tsl_{nuclide}_{material}.jeff'
+                ])
+                for path in burnup_dirs
+            )
 
             if nuclide == 'O16':
                 table_name = f'o{material.lower()}'
@@ -69,16 +80,25 @@ def directory_tsl_args(neutron_dir, thermal_dir, output_dir, libver):
             name_part = nuclide if isotope_specific else symbol
             name = f'c_{name_part}_in_{material}'
 
-            yield (
-                path_neutron,
-                paths_thermal,
-                output_dir,
-                libver,
-                name,
-                table_name,
-                1000*Z + A,
-                nuclide,
-            )
+            for suffix, paths_thermal in evaluations:
+                missing = [p for p in paths_thermal if not p.is_file()]
+                if not paths_thermal or missing:
+                    raise FileNotFoundError(
+                        f'No TSL evaluations found for '
+                        f'{nuclide} in {material}{suffix}'
+                    )
+
+                yield (
+                    path_neutron,
+                    paths_thermal,
+                    output_dir,
+                    libver,
+                    name + suffix,
+                    table_name,
+                    1000*Z + A,
+                    nuclide,
+                    material != 'Zy4',
+                )
 
 
 class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter,
