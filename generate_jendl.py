@@ -13,6 +13,7 @@ from shutil import rmtree
 from urllib.parse import urljoin
 
 import openmc.data
+import tsl_leapr
 from utils import download, process_neutron, process_thermal, extract, update_zsymam
 
 
@@ -55,6 +56,8 @@ def main():
     parser.add_argument('--temperatures', type=float,
                         default=[250.0, 293.6, 600.0, 900.0, 1200.0, 2500.0],
                         help="Temperatures in Kelvin", nargs='+')
+    parser.add_argument('--tsl-temperatures', type=float,  nargs='+', default=None, help="Regenerate the thermal scattering tables that have a tsl_leapr registry entry at these temperatures (added to the shipped MF7 grid) by re-running NJOY LEAPR")
+    parser.add_argument('--tsl-out',          type=Path,   default=None,           help="Directory for the regenerated LEAPR decks, tapes and validation reports (default: <destination>/tsl_leapr)")
     parser.set_defaults(download=True, extract=True, cleanup=False)
     args = parser.parse_args()
 
@@ -311,7 +314,11 @@ def main():
         with Pool() as pool:
             results = []
             for path_neutron, path_thermal in thermal_details['sab_files']:
-                func_args = (neutron_dir / path_neutron, thermal_dir / path_thermal,
+                tsl_path = tsl_leapr.hook_thermal_path(
+                    tsl_leapr.registry.RELEASE_TO_LIB.get(('jendl', args.release)),
+                    thermal_dir / path_thermal, args.tsl_temperatures,
+                    args.tsl_out or args.destination / 'tsl_leapr')
+                func_args = (neutron_dir / path_neutron, tsl_path,
                              args.destination / 'thermal', args.libver)
                 r = pool.apply_async(process_thermal, func_args)
                 results.append(r)
